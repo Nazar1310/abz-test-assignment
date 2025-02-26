@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -13,9 +14,13 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property string $phone
+ * @property int $position_id
  * @property string $password
  * @property string|null $photo_path
  * @property Carbon $created_at
+ *
+ * @property Position $position
  */
 class User extends Authenticatable
 {
@@ -30,6 +35,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'position_id',
         'photo_path',
     ];
 
@@ -51,4 +58,12 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * @return BelongsTo
+     */
+    public function position(): BelongsTo
+    {
+        return $this->belongsTo(Position::class);
+    }
 }

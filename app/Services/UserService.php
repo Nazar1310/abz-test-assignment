@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Repositories\UserRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserService
@@ -25,6 +26,14 @@ class UserService
     public function getAllUsers(int $page, int $perPage): LengthAwarePaginator
     {
         return $this->userRepository->getAllPaginated($page, $perPage);
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getAllPositions(): Collection
+    {
+        return $this->userRepository->getAllPositions();
     }
 
     /**

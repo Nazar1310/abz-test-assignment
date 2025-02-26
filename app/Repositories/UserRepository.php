@@ -2,8 +2,11 @@
 
 namespace App\Repositories;
 
+use App\Models\Position;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -15,7 +18,22 @@ class UserRepository implements UserRepositoryInterface
      */
     public function getAllPaginated(int $page, int $perPage): LengthAwarePaginator
     {
-        return User::query()->orderBy('id','DESC')->paginate(perPage: $perPage, page: $page);
+        return User::with('position')
+            ->orderBy('id','DESC')
+            ->paginate(perPage: $perPage, page: $page);
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getAllPositions(): Collection
+    {
+        $cacheKey = 'positions_data';
+        $cacheTTL = now()->addDays(7);
+
+        return Cache::remember($cacheKey, $cacheTTL, function () {
+            return Position::query()->get();
+        });
     }
 
     /**
@@ -24,7 +42,7 @@ class UserRepository implements UserRepositoryInterface
      */
     public function create(array $data): User
     {
-        $data['password'] = bcrypt($data['password']);
+        $data['password'] = bcrypt('qwerty123'); // For testing
         /** @var User $user */
         $user = User::query()->create($data);
         return $user;
@@ -37,7 +55,9 @@ class UserRepository implements UserRepositoryInterface
     public function findByEmail(string $email): ?User
     {
         /** @var User|bool $user */
-        $user = User::query()->where('email', $email)->first();
+        $user = User::with('position')
+            ->where('email', $email)
+            ->first();
         return $user ?: null;
     }
 }

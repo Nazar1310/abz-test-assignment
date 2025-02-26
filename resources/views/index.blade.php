@@ -5,30 +5,17 @@
     <title>API Demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script>
-        const API_URL = 'https://kravchuk-nazar.online/api';
+        const API_URL = '{{env('APP_URL')}}/api';
     </script>
 </head>
 <body>
 <div class="container mt-5">
-    <h1>Login</h1>
-    <form id="registerForm">
-        <div class="mb-3">
-            <label>Email:</label>
-            <input type="email" id="email" class="form-control" required placeholder="test@gmail.com">
-        </div>
-
-        <div class="mb-3">
-            <label>Password:</label>
-            <input type="password" id="password" class="form-control" required placeholder="qwerty123">
-        </div>
-
-        <button type="submit" class="btn btn-primary">Login & Get Token</button>
-    </form>
+    <button id="getToken" class="btn btn-primary">Get Token</button>
 
     <hr>
 
-    <h2>Add New User</h2>
     <form id="createUserForm" enctype="multipart/form-data" style="display: none">
+        <h2>Add New User</h2>
         <div class="mb-3">
             <label>Name:</label>
             <input type="text" name="name" class="form-control" required>
@@ -40,8 +27,13 @@
         </div>
 
         <div class="mb-3">
-            <label>Password:</label>
-            <input type="password" name="password" class="form-control" required placeholder="min:8">
+            <label>Phone:</label>
+            <input type="text" name="phone" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Position:</label>
+            <select id="positionSelect" name="position_id" class="form-control" required></select>
         </div>
 
         <div class="mb-3">
@@ -64,56 +56,73 @@
     if (localStorage.getItem('auth_token')) {
         document.getElementById('createUserForm').style.display = 'block';
     }
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
+    document.getElementById('getToken').addEventListener('click', async () => {
         try {
-            const response = await axios.post(`${API_URL}/login`, {
-                email,
-                password
-            });
+            const response = await axios.get(`${API_URL}/token`);
+            const data = response.data;
 
-            const token = response.data.access_token;
-            localStorage.setItem('auth_token', token);
-            alert('Token saved successfully!');
-
-            window.location.href = '/';
+            if (data.success) {
+                localStorage.setItem('auth_token', data.token);
+                alert('Token saved successfully!');
+                window.location.href = '/';
+            }
         } catch (error) {
-            alert('Invalid credentials!');
+            alert('Error');
         }
     });
+
+    async function loadPositions() {
+        try {
+            const response = await axios.get(`${API_URL}/positions`);
+            const data = response.data;
+
+            if (data.success) {
+                let positionListHtml = '';
+                data.positions.forEach(position => {
+                    positionListHtml += `<option value="${position.id}">${position.name}</option>`;
+                });
+
+                document.getElementById('positionSelect').innerHTML = positionListHtml;
+            }
+        } catch (error) {
+            console.error('Error loading positions:', error);
+        }
+    }
+
+    loadPositions();
 
     const perPage = 6;
     let page = 1;
 
     async function loadUsers() {
         try {
-            const response = await axios.get(`${API_URL}/users?per_page=${perPage}&page=${page}`);
-            if(response.statusText === "OK") {
-                page ++;
-            }
-            const users = response.data;
+            const response = await axios.get(`${API_URL}/users?count=${perPage}&page=${page}`);
+            const data = response.data;
 
-            let userListHtml = '';
-            users.forEach(user => {
-                userListHtml += `
-                <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <img src="${user.photo_url}" class="card-img-top" style="height: 70px; width: 70px; object-fit: cover; margin: auto; margin-top: 10px;">
-                        <div class="card-body">
-                            <h5 class="card-title">${user.name}</h5>
-                            <p class="card-text">
-                                Email: ${user.email} <br>
-                            </p>
+            if (data.success) {
+                if (data.total_pages > page) {
+                    page ++;
+                }
+                let userListHtml = '';
+                data.users.forEach(user => {
+                    userListHtml += `
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <img src="${user.photo}" class="card-img-top" style="height: 70px; width: 70px; object-fit: cover; margin: auto; margin-top: 10px;">
+                            <div class="card-body">
+                                <h5 class="card-title">${user.name}</h5>
+                                <p class="card-text">
+                                    Position: ${user.position} <br>
+                                    Email: ${user.email} <br>
+                                    Phone: ${user.phone} <br>
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                </div>`;
-            });
+                    </div>`;
+                });
 
-            document.getElementById('userList').insertAdjacentHTML('beforeend', userListHtml);
+                document.getElementById('userList').insertAdjacentHTML('beforeend', userListHtml);
+            }
         } catch (error) {
             console.error('Error loading users:', error);
         }
@@ -131,24 +140,21 @@
         const form = e.target;
         const formData = new FormData(form);
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            alert('Invalid token!');
-        } else {
-            try {
-                await axios.post(`${API_URL}/users`, formData, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
+        try {
+            const response = await axios.post(`${API_URL}/users`, formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            const data = response.data;
 
-                alert('User created successfully!');
-                form.reset();
+            if (data.success) {
+                alert(data.message);
                 window.location.href = '/';
-            } catch (error) {
-                console.error('Error creating user:', error);
-                alert('Error creating user.');
             }
+        } catch (error) {
+            alert('Error creating user.');
         }
     });
 </script>

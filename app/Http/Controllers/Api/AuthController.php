@@ -30,6 +30,18 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
+            'success' => true,
+        ]);
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function getToken(): JsonResponse
+    {
+        return response()->json([
+            'token' => $this->authService->login('test@gmail.com', 'qwerty123'),
+            'success' => true,
         ]);
     }
 }

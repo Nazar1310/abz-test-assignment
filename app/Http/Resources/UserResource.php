@@ -29,8 +29,11 @@ class UserResource extends JsonResource
             'id' => $this->user->id,
             'name' => $this->user->name,
             'email' => $this->user->email,
-            'photo_url' => $this->user->photo_path ? asset($this->user->photo_path) : asset("img/default_avatar.png"),
-            'created_at' => $this->user->created_at->toDateTimeString(),
+            'phone' => $this->user->phone,
+            'position' => $this->user->position->name,
+            'position_id' => $this->user->position_id,
+            'photo' => $this->user->photo_path ? asset($this->user->photo_path) : asset("img/default_avatar.png"),
+            'registration_timestamp' => $this->user->created_at->timestamp,
         ];
     }
 }

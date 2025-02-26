@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\User;
 
@@ -13,6 +14,11 @@ interface UserRepositoryInterface
      * @return LengthAwarePaginator
      */
     public function getAllPaginated(int $page, int $perPage): LengthAwarePaginator;
+
+    /**
+     * @return Collection
+     */
+    public function getAllPositions(): Collection;
 
     /**
      * @param array $data

@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
- * @property string $page
- * @property string $per_page
+ * @property int $page
+ * @property int $count
  */
 class UserGetRequest extends FormRequest
 {
@@ -29,7 +31,16 @@ class UserGetRequest extends FormRequest
     {
         return [
             'page' => ['required', 'integer', 'min:1', 'max:100'],
-            'per_page' => ['required', 'integer', 'min:1', 'max:100']
+            'count' => ['required', 'integer', 'min:1', 'max:100']
         ];
+    }
+
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'fails' => $validator->errors(),
+        ], 422));
     }
 }
